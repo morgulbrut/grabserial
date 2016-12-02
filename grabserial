@@ -94,6 +94,7 @@ options:
     -T, --systime          Print system time for each line received. The time
                            is the absolute local time when the first character
                            of each line is received by %s
+    -D, --datetime		   Like -T but with date as well
     -m, --match=<pat>      Specify a regular expression pattern to match to
                            set a base time.  Time values for lines after the
                            line matching the pattern will be relative to
@@ -148,7 +149,7 @@ def grab(arglist, outputfd=sys.stdout):
 	# parse the command line options
 	try:
 		opts, args = getopt.getopt(arglist,
-                        "hli:d:b:B:w:p:s:xrfc:tTm:e:o:vVq:S", [
+                        "hli:d:b:B:w:p:s:xrfc:tTDm:e:o:vVq:S", [
 				"help",
 				"launchtime",
 				"instantpat=",
@@ -163,6 +164,7 @@ def grab(arglist, outputfd=sys.stdout):
 				"command=",
 				"time",
 				"systime",
+				"datetime",
 				"match=",
 				"endtime=",
 				"output=",
@@ -257,9 +259,15 @@ def grab(arglist, outputfd=sys.stdout):
 		if opt in ["-t", "--time"]:
 			show_time=1
 			show_systime=0
+			show_datetime=0
 		if opt in ["-T", "--systime"]:
 			show_time=0
 			show_systime=1
+			show_datetime=0
+		if opt in ["-D", "--datetime"]:
+			show_time=0
+			show_systime=0
+			show_datetime=1
 		if opt in ["-m", "--match"]:
 			basepat=arg
 		if opt in ["-i", "--instantpat"]:
@@ -384,6 +392,18 @@ def grab(arglist, outputfd=sys.stdout):
 			if show_systime and newline:
 				linetime = time.time()
 				linetimestr = datetime.datetime.now().strftime("%H:%M:%S.%f")
+				elapsed = linetime-basetime
+				delta = elapsed-prev1
+				msg = "[%s %2.6f] " % (linetimestr, delta)
+				sys.stdout.write(msg)
+				if outputfile:
+					out.write(msg)
+				prev1 = elapsed
+				newline = 0
+				
+			if show_datetime and newline:
+				linetime = time.time()
+				linetimestr = datetime.datetime.now().strftime("%D %T")
 				elapsed = linetime-basetime
 				delta = elapsed-prev1
 				msg = "[%s %2.6f] " % (linetimestr, delta)
